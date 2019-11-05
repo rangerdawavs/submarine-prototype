@@ -4,11 +4,18 @@ import cv2
 import camera_m as camera
 from camera_m import removearray as remove_a   #because of a bug we need a function for sorting through arrays
 import geogebra_m as geo
+import serial   #for bluetooth
+
+port = serial.Serial("/dev/rfcomm0", baudrate=9600)
+port.write(input("primer coeficiente").encode('utf-8'))
+port.write(input("segundo coeficiente").encode('utf-8'))
 
 camera0 = camera.setup(320,240) #width,height
 
 sliderstart = (0, 0, 0, 255, 255, 255)   #staring values for sliders
 camera.setup_sliders(sliderstart)
+
+last_time = 0
 
 while True:
     slider_values = camera.read_sliders()
@@ -34,6 +41,11 @@ while True:
         ceta = geo.angle_of_vector(v_obj)   #finds the angle between the x axis and the vector
         print(ceta)
         
+        if(time.time()-last_time>1):    #waits a second to send data
+                port.write(str(int(ceta)).encode('utf-8'))
+                print("sending")
+                last_time=time.time()
+
     if(camera.wait_for_exit(27,5)==1):   #key to exit, milliseconds to wait
         break
     
