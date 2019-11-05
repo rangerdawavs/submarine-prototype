@@ -5,6 +5,7 @@ import camera_m as camera
 from camera_m import removearray as remove_a   #because of a bug we need a function for sorting through arrays
 import geogebra_m as geo
 import serial   #for bluetooth
+import time
 
 camera0 = camera.setup(320,240) #width,height
 
@@ -49,7 +50,7 @@ while True:
             port = serial.Serial("/dev/rfcomm"+input("port number"), baudrate=9600)
             port.write(input("primer coeficiente").encode('utf-8'))
             port.write(input("segundo coeficiente").encode('utf-8'))
-            bluetooth == 1
+            bluetooth = 1
         else:
             bluetooth = 0
         
