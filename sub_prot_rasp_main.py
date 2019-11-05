@@ -46,12 +46,12 @@ while True:
         
     if(camera.wait_for_exit('a',5)==1):   #key to exit, milliseconds to wait
         if(bluetooth == 0):
-            port = serial.Serial("/dev/rfcomm0", baudrate=9600)
+            port = serial.Serial("/dev/rfcomm"+input("port number"), baudrate=9600)
             port.write(input("primer coeficiente").encode('utf-8'))
             port.write(input("segundo coeficiente").encode('utf-8'))
             bluetooth == 1
         else:
-            break
+            bluetooth = 0
         
 cv2.destroyAllWindows()
 camera0.release()
