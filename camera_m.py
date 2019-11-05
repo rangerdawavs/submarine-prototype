@@ -79,7 +79,7 @@ def show_mask(frame,slider_values2):
 
 def wait_for_exit(key,milli):
     k = cv2.waitKey(milli) & 0xFF
-    if k == key:
+    if k == ord(key):
         return 1
     else:
         return 0
