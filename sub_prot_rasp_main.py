@@ -42,15 +42,15 @@ while True:
         o_vector= (c_obj,o) #vector from the center of the object to the origin
         ceta2 = geo.angle_of_vector(o_vector)
         mag = geo.mag_v(o_vector)   #magnitud of th vector aka distance to center
-        print(ceta,",",ceta2,",",mag,";")
+        print(ceta,",",ceta2,",",mag)
         if(bluetooth == 1):
             if(time.time()-last_time>1):    #waits a second to send data
                 port.write(str(int(ceta)).encode('utf-8'))
-                port.write(",").encode('utf-8'))
+                port.write((",").encode('utf-8'))
                 port.write(str(int(ceta2)).encode('utf-8'))
-                port.write(",").encode('utf-8'))
+                port.write((",").encode('utf-8'))
                 port.write(str(int(mag)).encode('utf-8'))
-                port.write(";").encode('utf-8'))
+                #port.write((";").encode('utf-8'))
                 print("sending")
                 last_time=time.time()
         
@@ -59,6 +59,8 @@ while True:
             port = serial.Serial("/dev/rfcomm"+input("port number"), baudrate=9600)
             port.write(input("primer coeficiente").encode('utf-8'))
             port.write(input("segundo coeficiente").encode('utf-8'))
+            port.write(input("tercer coeficiente").encode('utf-8'))
+            port.write(input("cuarto coeficiente").encode('utf-8'))
             bluetooth = 1
         else:
             bluetooth = 0
