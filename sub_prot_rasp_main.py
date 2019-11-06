@@ -14,7 +14,7 @@ camera.setup_sliders(sliderstart)
 
 last_time = 0
 
-bluetooth = 0
+bluetooth = 0   #variable for current state
 
 while True:
     slider_values = camera.read_sliders()
@@ -38,10 +38,19 @@ while True:
         c_obj = geo.mp(c1,c2)   #center of the obj
         v_obj = (c_obj,c1)  #defines a vector for the obj     
         ceta = geo.angle_of_vector(v_obj)   #finds the angle between the x axis and the vector
-        print(ceta)
+        o = (0,0)   #origin point
+        o_vector= (c_obj,o) #vector from the center of the object to the origin
+        ceta2 = geo.angle_of_vector(o_vector)
+        mag = geo.mag_v(o_vector)   #magnitud of th vector aka distance to center
+        print(ceta,",",ceta2,",",mag,";")
         if(bluetooth == 1):
             if(time.time()-last_time>1):    #waits a second to send data
                 port.write(str(int(ceta)).encode('utf-8'))
+                port.write(",").encode('utf-8'))
+                port.write(str(int(ceta2)).encode('utf-8'))
+                port.write(",").encode('utf-8'))
+                port.write(str(int(mag)).encode('utf-8'))
+                port.write(";").encode('utf-8'))
                 print("sending")
                 last_time=time.time()
         
