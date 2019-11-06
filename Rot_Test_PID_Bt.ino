@@ -8,8 +8,12 @@
 
 //declarando las variables que usaremos para leer el Serial
 int zeta;//esta variable guarda el angulo donde esta apuntando el vehiculo
+int alpha;//angulo al cual se tiene que llegar
+int mag; //distancia al centro
 String a;// esta variable guarda temporalmete lo que se recibe del serial
-String b;
+String b;// esta variable guarda un substring
+String c;// esta variable guarda un substring
+String d;// esta variable guarda un substring
 int error;
 int previousError;
 float errorDot;
@@ -48,10 +52,17 @@ void loop() {
   }
     if( Msg<=2){
     a = Serial.readString();
-    //b= getValue(a,';',0);
-    //zeta = b.toInt();
-    zeta = a.toInt();
-     Serial.println(zeta);
+    b= getValue(a,',',0);
+    c= getValue(a,',',1);
+    d= getValue(a,',',2);
+    zeta = b.toInt();
+    alpha = c.toInt();
+    mag = d.toInt();
+     Serial.print(zeta);
+     Serial.print(',');
+     Serial.print(alpha);
+     Serial.print(',');
+     Serial.println(mag);
   if((zeta<180 && zeta> -180)){
    //y ahora usamos if statements para detectar si el comando es idéntico a uno de los que  
    //pusimos al principio
@@ -80,4 +91,21 @@ void loop() {
   }
 }
   }
+}
+
+
+String getValue(String data, char separator, int index)
+{
+    int found = 0;
+    int strIndex[] = { 0, -1 };
+    int maxIndex = data.length() - 1;
+
+    for (int i = 0; i <= maxIndex && found <= index; i++) {
+        if (data.charAt(i) == separator || i == maxIndex) {
+            found++;
+            strIndex[0] = strIndex[1] + 1;
+            strIndex[1] = (i == maxIndex) ? i+1 : i;
+        }
+    }
+    return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
