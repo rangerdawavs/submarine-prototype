@@ -86,10 +86,10 @@ void loop() {
     currentTime= millis();
    error_Rot= zeta-alpha;
    if (error_Rot>180 or error_Rot<-180){
-    if error_Rot>0{
+    if (error_Rot>0){
      error_Rot = error_Rot-360;
     }
-    if error_Rot<0{
+    if (error_Rot<0){
      error_Rot = error_Rot+360;
     }
     
