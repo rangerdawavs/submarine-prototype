@@ -84,7 +84,16 @@ void loop() {
    //y ahora usamos if statements para detectar si el comando es idéntico a uno de los que  
    //pusimos al principio
     currentTime= millis();
-     error_Rot= zeta-alpha ;
+   error_Rot= zeta-alpha;
+   if (error_Rot>180 or error_Rot<-180){
+    if error_Rot>0{
+     error_Rot = error_Rot-360;
+    }
+    if error_Rot<0{
+     error_Rot = error_Rot+360;
+    }
+    
+   }
      error_Pos= mag-0
     errorDot_Rot =(error_Rot-previousError_Rot)/(currentTime-previousTime);
     errorDot_Pos =(error_Pos-previousError_Pos)/(currentTime-previousTime);
