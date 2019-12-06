@@ -35,13 +35,13 @@ while True:
         camera.show_contour(second_biggest_contour,frame)
         c1 = camera.get_center(biggest_contour)
         c2 = camera.get_center(second_biggest_contour)
-        c_obj = geo.mp(c1,c2)   #center of the obj
-        v_obj = (c_obj,c1)  #defines a vector for the obj     
-        ceta = geo.angle_of_vector(v_obj)   #finds the angle between the x axis and the vector
-        o = (0,0)   #origin point
-        o_vector= (c_obj,o) #vector from the center of the object to the origin
-        ceta2 = geo.angle_of_vector(o_vector)
-        mag = geo.mag_v(o_vector)   #magnitud of th vector aka distance to center
+        obj_center = geo.mid_point(c1,c2)   #center of the obj
+        obj_vector = (obj_center,c1)  #defines a vector for the obj     
+        ceta = geo.angle_of_vector(obj_vector)   #finds the angle between the x axis and the vector
+        origin = (0,0)   #origin point
+        origin_vector= (obj_center,origin) #vector from the center of the object to the origin
+        ceta2 = geo.angle_of_vector(origin_vector)
+        mag = geo.magnitud_of_vector(origin_vector)   #magnitud of th vector aka distance to center
         print(ceta,",",ceta2,",",mag)
         if(bluetooth == 1):
             if(time.time()-last_time>1):    #waits a second to send data
