@@ -34,11 +34,11 @@ def magnitud_of_vector(vector):     #returns the magnitud of a vector
     
 def sum_of_vectors(vector1,vector2):
     p1,p2 = vector1
-    p3,p4 = vactor2
+    p3,p4 = vector2
     x1,y1 = p1
     x2,y2 = p2
     x3,y3 = p3
     x4,y4 = p4
     if(p1 != p3):
         raise Exception("base of vectors must be the same")
-    return(p1,(x2+x4,y2+y4))
+    return(p1,(x2+x4-x1,y2+y4-y1))
