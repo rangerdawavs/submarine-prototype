@@ -43,6 +43,8 @@ while True:
         ceta2 = geo.angle_of_vector(origin_vector)
         mag = geo.magnitud_of_vector(origin_vector)   #magnitud of th vector aka distance to center
         print(ceta,",",ceta2,",",mag)
+        camera.draw_vector(frame,obj_vector)
+        camera.draw_vector(frame,origin_vector)
         if(bluetooth == 1):
             if(time.time()-last_time>1):    #waits a second to send data
                 port.write(str(int(ceta)).encode('utf-8'))
