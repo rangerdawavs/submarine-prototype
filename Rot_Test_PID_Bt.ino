@@ -84,8 +84,17 @@ void loop() {
    //y ahora usamos if statements para detectar si el comando es idéntico a uno de los que  
    //pusimos al principio
     currentTime= millis();
-     error_Rot= zeta-alpha ;
-     error_Pos= mag-0
+   error_Rot= zeta-alpha;
+   if (error_Rot>180 or error_Rot<-180){
+    if (error_Rot>0){
+     error_Rot = error_Rot-360;
+    }
+    if (error_Rot<0){
+     error_Rot = error_Rot+360;
+    }
+    
+   }
+     error_Pos= mag-0;
     errorDot_Rot =(error_Rot-previousError_Rot)/(currentTime-previousTime);
     errorDot_Pos =(error_Pos-previousError_Pos)/(currentTime-previousTime);
     //Serial.println("detected ");
@@ -93,7 +102,7 @@ void loop() {
    previousError_Pos= error_Pos;
     previousTime=currentTime;    
     control_Rot = -k_P_Rot*error_Rot +k_D_Rot*errorDot_Rot;
-   control_Pos = -k_P_Pos*error_Pos +k_D*errorDot_Pos;
+   control_Pos = -k_P_Pos*error_Pos +k_D_Pos*errorDot_Pos;
     if(abs(control_Rot)>abs(errorDeadband_Rot) && -abs(errorDeadband_Rot)> -abs(control_Rot)){
     if (control_Rot<0){
       pivotLeft(100,abs(control_Rot));
@@ -109,7 +118,7 @@ void loop() {
   stopMotors();
    //delay(100);
     }
-   if(abs(control_Rot)<abs(errorDeadband)&& -abs(errorDeadband)< -abs(control_Rot)){
+   if(abs(control_Rot)<abs(errorDeadband_Rot)&& -abs(errorDeadband_Rot)< -abs(control_Rot)){
     if(abs(control_Pos)>abs(errorDeadband_Pos) && -abs(errorDeadband_Pos)> -abs(control_Pos)){
     if (control_Pos<0){
       backward(100,abs(control_Pos));
@@ -127,7 +136,7 @@ void loop() {
 }
   }
 }
-
+}
 
 String getValue(String data, char separator, int index)
 {
