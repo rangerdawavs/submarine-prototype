@@ -34,58 +34,57 @@ int Msg ;// this variable stores the message number so classify the first and se
 
 
 void setup() {
-  setMotors();  // prendiendo motores
+  setMotors();  // turn motors on
   Serial.begin(9600);
   Msg=0;
 } 
 void loop() {
   // put your main code here, to run repeatedly:
 
-  if (Serial.available()){ //espera a detectar algo. 
+  if (Serial.available()){ //waits to detect something 
 
-    if( Msg<4){
+    if( Msg<4){ //first 4 messages saved as coefficients
        if(Msg=0){
         a = Serial.readString();
-        k_P_Rot = a.toFloat();
-        Msg=1;
+        k_P_Rot = a.toFloat(); //the coefficient that determines how important the error in the rotation is
+        Msg=1;  
         
         }
        if(Msg=1){
         a = Serial.readString();
-        k_D_Rot = a.toFloat();
-        Msg=2;
+        k_D_Rot = a.toFloat(); //the coefficient that determines how important the derivative in the rotation is
+        Msg=2; 
         }
        if(Msg=2){
         a = Serial.readString();
-        k_P_Pos = a.toFloat();
-        Msg=3;
+        k_P_Pos = a.toFloat(); //the coefficient that determines how important the error in the position is
+        Msg=3; 
         }
      if(Msg=3){
         a = Serial.readString();
-        k_D_Pos = a.toFloat();
+        k_D_Pos = a.toFloat(); //the coefficient that determines how important the derivative in the position is
         Msg=4;
         }
 
   }
-    if( Msg>=4){
+    if( Msg>=4){ //from here on, the other messages are taken as data. received as triples
     a = Serial.readString();
     b= getValue(a,',',0);
     c= getValue(a,',',1);
-    d= getValue(a,',',2);
+    d= getValue(a,',',2); //breaks down the triples into three strings
     zeta = b.toInt();
     alpha = c.toInt();
-    mag = d.toInt();
+    mag = d.toInt(); // changes string to integers
      Serial.print(zeta);
      Serial.print(',');
      Serial.print(alpha);
      Serial.print(',');
-     Serial.println(mag);
-  if((zeta<180 && zeta> -180)){
-   //y ahora usamos if statements para detectar si el comando es idéntico a uno de los que  
-   //pusimos al principio
-    currentTime= millis();
-   error_Rot= zeta-alpha;
-   if (error_Rot>180 or error_Rot<-180){
+     Serial.println(mag); //prints data
+  if((zeta <= 180 && zeta >= -180)){
+   //fliters out unexpected values
+    currentTime= millis(); //records time since the last message was received
+   error_Rot= zeta-alpha; // calculates the error of the angle
+   if (error_Rot>180 or error_Rot<-180){ //interprets angles outside of the range in module 180 (taking in count sign)
     if (error_Rot>0){
      error_Rot = error_Rot-360;
     }
@@ -94,16 +93,16 @@ void loop() {
     }
     
    }
-     error_Pos= mag-0;
-    errorDot_Rot =(error_Rot-previousError_Rot)/(currentTime-previousTime);
+     error_Pos= mag-0; //calculates the error in the position
+    errorDot_Rot =(error_Rot-previousError_Rot)/(currentTime-previousTime); //calculates derivative
     errorDot_Pos =(error_Pos-previousError_Pos)/(currentTime-previousTime);
     //Serial.println("detected ");
     previousError_Rot= error_Rot;
    previousError_Pos= error_Pos;
     previousTime=currentTime;    
-    control_Rot = -k_P_Rot*error_Rot +k_D_Rot*errorDot_Rot;
+    control_Rot = -k_P_Rot*error_Rot +k_D_Rot*errorDot_Rot; //creates a signal using the PID
    control_Pos = -k_P_Pos*error_Pos +k_D_Pos*errorDot_Pos;
-    if(abs(control_Rot)>abs(errorDeadband_Rot) && -abs(errorDeadband_Rot)> -abs(control_Rot)){
+    if(abs(control_Rot)>abs(errorDeadband_Rot) && -abs(errorDeadband_Rot)> -abs(control_Rot)){ //checks if the error is outside of the deadband 
     if (control_Rot<0){
       pivotLeft(100,abs(control_Rot));
       //Serial.println("left");
