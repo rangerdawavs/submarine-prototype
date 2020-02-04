@@ -96,6 +96,7 @@ void loop() {
      Serial.print(',');
      Serial.print(alpha);
      Serial.print(',');
+     
      Serial.println(mag); //prints data
   if((zeta <= 180 && zeta >= -180)){
    //fliters out unexpected values
