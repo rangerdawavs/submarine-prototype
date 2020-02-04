@@ -98,3 +98,14 @@ def show_contour(contour,frame):
     x,y,w,h = cv2.boundingRect(contour)
     cv2.rectangle(frame,(x,y),(x+w,y+h),(0,255,0),2)
     cv2.imshow('colorTest', frame)
+
+def draw_vector(img,vector):
+    p1,p2 = vector
+    x1,y1 = p1
+    x2,y2 = p2
+    x1= int(x1)
+    x2= int(x2)
+    y1= int(y1)
+    y2= int(y2)
+    img = cv2.line(img,(x1+160,y1+120),(x2+160,y2+120),(0,255,0),5)
+    cv2.imshow('colorTest', img)
