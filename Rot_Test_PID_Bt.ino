@@ -31,7 +31,33 @@ int currentTime;// these two are needed to find the derivative of the error
 int errorDeadband_Rot=1;// the deadband makes sure that the system is not overcompensating for negligable error
 int errorDeadband_Pos=1;
 int Msg =4;// this variable stores the message number so classify the first and second as coefficients
+BLA::Matrix<4,4> Pos_StateTransition;
+BLA::Matrix<4,4> Pos_ControlMatrix;
+BLA::Matrix<2> Pos_ControlVector;// the accelerometer output
+BLA::Matrix<2,2> Pos_PredictionVariance;// should be a identity matrix multiplied by the accelerometer variance
+BLA::Matrix<4,4> Pos_MeasurmentVariance;//should be the camera variance diagonally and 0s in the remaining spaces
+BLA::Matrix<4> Pos_MeasurementVector;
+BLA::Matrix<4,4> Pos_StateCovarianceMatrix;
+BLA::Matrix<4,4> Pos_H;
+BLA::Matrix<4> PositionVelocityVector;
+BLA::Matrix<4,4> Pos_KalmanGain; 
+BLA::Matrix<4,4> Pos_identity = {1,0,0,0
+                                 0,1,0,0
+                                 0,0,1,0
+                                 0,0,0,1};
 
+BLA::Matrix<2,2> Rot_StateTransition;
+BLA::Matrix<2> Rot_ControlMatrix;
+BLA::Matrix<1> Rot_ControlVector;// the gyro output
+BLA::Matrix<2,2> Rot_PredictionVariance;// should be a identity matrix multiplied by the gyro variance
+BLA::Matrix<2,2> Rot_MeasurmentVariance;//should be the camera variance diagonally and 0s in the remaining spaces
+BLA::Matrix<2> Rot_MeasurementVector;
+BLA::Matrix<2,2> Rot_StateCovarianceMatrix;
+BLA::Matrix<2,2> Rot_H;
+BLA::Matrix<2> RotationVelocityVector;
+BLA::Matrix<2,2> Rot_KalmanGain; 
+BLA::Matrix<2,2> Rot_identity = {1,0, 
+                                 0,1};
 
 void setup() {
   setMotors();  // turn motors on
@@ -41,20 +67,25 @@ void setup() {
   mpu6050.calcGyroOffsets(true);
 } 
 void loop() {
-  // put your main code here, to run repeatedly:
+  
 
   if (Serial.available()){ //If something is detected.
     a = Serial.readString();
     b= getValue(a,',',0);// this first bit number holds information about what the message is about. 
     c= getValue(a,',',1);
-    d= getValue(a,',',2); //breaks down the triples into three strings
+    d= getValue(a,',',2); 
     e= getValue(a,',',3);
     f= getValue(a,',',4);
-   if(b==0){// in the case that it is just position information
-    x_Current= c.toFloat();
-    y_Current= d.toFloat();
-    x_Desired= e.toFloat();
-    y_Desired= f.toFloat();
+    h= getValue(a,',',5);
+    i= getValue(a,',',6);
+   if(b==0){// in the case that it is information
+    Pi_x= c.toFloat();
+    Pi_x_Dot= d.toFloat();
+    Pi_y= e.toFloat();
+    Pi_y_Dot= f.toFloat();
+    Rot_MeasurementVector(1)= g.toFloat();
+    Rot_MeasurementVector(2)= h.toFloat();
+    /* this section was commented since it calculates the desired angle using the current position. 
     if(y_Current<y_Desired){
      alpha = atan((x_Current-x_Desired)/(y_Current-y_Desired));
     }
@@ -76,7 +107,7 @@ void loop() {
      alpha = 90;
      }
     }
-    
+    */
     mag = sqrt(sq(x_Current-x_Desired)+sq(y_Current-y_Desired));
    } 
    if(b=1){// in the case that it is coefficient information
@@ -85,8 +116,8 @@ void loop() {
       k_P_Pos=e.toFloat();// El coefficient del proportional del magnitude del error en position
       k_D_Pos=f.toFloat();
    } 
-   if(b==2){// in the case that it is the intinial angle setup information
-    zetaOffset = c.toInt();
+   if(b==2){// in the case that it is setup information
+    zetaOffset = c.toInt();// this must be changed before testing
        }  
   }
     if( Msg>=4){ //this condition is always met. It is just there in case another condition needs to be added later
@@ -98,6 +129,8 @@ void loop() {
      Serial.print(',');
      
      Serial.println(mag); //prints data
+     
+     // this section starts the control loop
   if((zeta <= 180 && zeta >= -180)){
    //fliters out unexpected values
    currentTime= millis(); //records time since the last message was received
