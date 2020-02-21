@@ -60,6 +60,9 @@ BLA::Matrix<2> RotationVelocityVector;
 BLA::Matrix<2,2> Rot_KalmanGain; 
 BLA::Matrix<2,2> Rot_identity = {1,0, 
                                  0,1};
+BLA::Matrix<4> Coefficients;
+BLA::Matrix<6> Desired_State;
+BLA::Matrix<6> error;
 float delta_t;//  the time between measurements
 void setup() {
   setMotors();  // turn motors on
@@ -81,10 +84,10 @@ void loop() {
     h= getValue(a,',',5);
     i= getValue(a,',',6);
    if(b==0){// in the case that it is information
-    PositionVelocityVector(1)= c.toFloat();
-    PositionVelocityVector(2)= d.toFloat();
-    PositionVelocityVector(3)= e.toFloat();
-    PositionVelocityVector(4)= f.toFloat();
+    Pos_MeasurementVector(1)= c.toFloat();
+    Pos_MeasurementVector(2)= d.toFloat();
+    Pos_MeasurementVector(3)= e.toFloat();
+    Pos_MeasurementVector(4)= f.toFloat();
     Rot_MeasurementVector(1)= g.toFloat();
     Rot_MeasurementVector(2)= h.toFloat();
     //The following section calculates the Kalman Gain, the Vector and the covariance matrix for position and rotation
@@ -96,7 +99,7 @@ void loop() {
     RotationVelocityVector+=Rot_KalmanGain*(Rot_MeasurementVector-RotationVelocityVector);
     Rot_StateCovarianceMatrix += ((Rot_identity-Rot_KalmanGain)*Rot_StateCovarianceMatrix) - Rot_StateCovarianceMatrix;
     
-    /* this section was commented since it calculates the desired angle using the current position. 
+    // the following section calculates the angle alpha, where the vehicle must point to get to the target PositionState
     if(y_Current<y_Desired){
      alpha = atan((x_Current-x_Desired)/(y_Current-y_Desired));
     }
@@ -118,24 +121,31 @@ void loop() {
      alpha = 90;
      }
     }
-    */
+    
    
    } 
    if(b=1){// in the case that it is coefficient information
-      k_P_Rot=c.toFloat();// El coefficient del proportional  del angulo
-      k_D_Rot=d.toFloat();// el coefficient de la derivada del angulo
-      k_P_Pos=e.toFloat();// El coefficient del proportional del magnitude del error en position
-      k_D_Pos=f.toFloat();
+      Coefficients(1)=e.toFloat();// El coefficient del proportional del magnitude del error en position
+      Coefficients(2)=f.toFloat();// coefficient for derivative in position
+      Coefficients(3)=c.toFloat();// El coefficient del proportional  del angulo
+      Coefficients(4)=d.toFloat();// el coefficient de la derivada del angulo
+      
    } 
    if(b==2){// in the case that it is setup information
-    zetaOffset = c.toInt();// this must be changed before testing
+    RotationVelocityVector(1) = c.toInt();// this must be changed before testing
     Msg=1;
-       }  
+   if(b==3){// in the case that it is information
+    Desired_State(1)= c.toFloat(); //x position
+    Desired_State(2)= d.toFloat();// x dot position
+    Desired_State(3)= e.toFloat();// y  position
+    Desired_State(4)= f.toFloat(); //y dot position
+    Desired_State(5)= g.toFloat(); // Rot
+    Desired_State(6)= h.toFloat();// rot dot
+       }
   }
  
     if( Msg>=1){ //this condition is always met. It is just there in case another condition needs to be added later
      delta_t= currentTime-previousTime;
-    zeta = 1;
      //the followin section does the predict step of the Kalman filter
      
  Pos_StateTransition << 1, delta_t,  0,  0,
@@ -152,7 +162,7 @@ void loop() {
                         0, 0;
  Rot_ControlMatrix << delta_t,
                         1; 
- Rot_ControlVector<< (mpu6050.getAngleZ()+ zetaOffset) /delta_t;
+ Rot_ControlVector<< (mpu6050.getGyroZ());
    
   PositionVelocityVector+=((Pos_StateTransition*PositionVelocityVector)+(Pos_ControlMatrix*Pos_ControlVector))-PositionVelocityVector;
   Pos_StateCovarianceMatrix +=(Pos_StateTransition* Pos_StateCovarianceMatrix*~Pos_StateTransition)+(Pos_ControlMatrix*~Pos_ControlMatrix*Pos_PredictionVariance)-Pos_StateCovarianceMatrix;
@@ -173,16 +183,28 @@ void loop() {
     PositionVelocityVector(1)=zeta;
      
      
-     
-     
-     mag = sqrt(sq(x_Current-x_Desired)+sq(y_Current-y_Desired));
+   
      // this section starts the control loop
      currentTime= millis();
   if((zeta <= 180 && zeta >= -180)){
    //fliters out unexpected values
    
-   //error_Rot= zeta-alpha; // calculates the error of the angle
-   //error_Pos= mag-0; //calculates the error in the position
+   
+   //This calculates the error
+    for(int i= 1; i<5;i++){
+   error(i)= Desired_State(i)-PositionVelocityVector(i);
+    }
+  // error(5)=Desired_State(5)-RotationVelocityVector(5);
+    error(5)=alpha-RotationVelocityVector(5);
+   error(6)=Desired_State(6)-RotationVelocityVector(6);
+   error(2)= error(2)*(-error(1)/abs(error(1)));
+   error(4)= error(4)*(-error(3)/abs(error(3)));
+   error_Rot= error(5);
+   errorDot_Rot= error(6)*(-error_Rot/abs(error_Rot));
+   error_Pos = sqrt(error(1)*error(1)+ error(3)*error(3)) ;
+   errorDot_Pos = sqrt(error(2)*error(2)+ error(4)*error(4));
+  
+   
    if (error_Rot>180 or error_Rot<-180){ //interprets angles outside of the range in module 180 (taking in count sign)
     if (error_Rot>0){
      error_Rot = error_Rot-360;
@@ -191,36 +213,46 @@ void loop() {
      error_Rot = error_Rot+360;
     }
    }
-    //errorDot_Rot =(error_Rot-previousError_Rot)/(currentTime-previousTime); //calculates derivative
-   //errorDot_Pos =(error_Pos-previousError_Pos)/(currentTime-previousTime);
-    //previousError_Rot= error_Rot;
-   //previousError_Pos= error_Pos;
-    previousTime=currentTime;    
-    control_Rot = -k_P_Rot*error_Rot +k_D_Rot*errorDot_Rot; //creates a signal using the PID
-   control_Pos = -k_P_Pos*error_Pos +k_D_Pos*errorDot_Pos;
-    if(abs(control_Rot)>abs(errorDeadband_Rot) && -abs(errorDeadband_Rot)> -abs(control_Rot)){ //checks if the error is outside of the deadband 
+    // end of error correction
+    control_Rot = -Coefficients(3)*error_Rot +Coefficients(4)*errorDot_Rot; //creates a signal using the PID
+   control_Pos = -Coefficients(1)*error_Pos +Coefficients(2)*errorDot_Pos;
+    
+   
+   if (control_Rot<256&&control_Rot>-256){
+   control_Rot= map(control_Rot,-255,255,-120,120);
+   
+   }
+   if(control_Rot>=256||control_Rot<=-256){
+   control_Rot= 120*(abs(control_Rot)/control_Rot);
+   }
+   delay(10);// not sure if necesary
+   previousTime=currentTime;
+   if(abs(control_Rot)>abs(errorDeadband_Rot)){ //checks if the error is outside of the deadband 
     if (control_Rot<0){
-      pivotLeft(100,abs(control_Rot));
+      pivotLeft(abs(control_Rot));
+      digitalWrite(LED_BUILTIN, HIGH);
     }
     if ( control_Rot> 0) {
-      pivotRight(100,abs(control_Rot));
+      pivotRight(abs(control_Rot));
+      digitalWrite(LED_BUILTIN, LOW);
+    } 
     }
-  stopMotors();
-    }
-   if(abs(control_Rot)<abs(errorDeadband_Rot)&& -abs(errorDeadband_Rot)< -abs(control_Rot)){
-    if(abs(control_Pos)>abs(errorDeadband_Pos) && -abs(errorDeadband_Pos)> -abs(control_Pos)){
+   if(abs(control_Rot)<abs(errorDeadband_Rot)){
+    if(abs(control_Pos)>abs(errorDeadband_Pos)){
     if (control_Pos<0){
       backward(100,abs(control_Pos));
-      //Serial.println("left");
     }
     if ( control_Pos> 0) {
       forward(100,abs(control_Pos));
     }
+    }
+    if(abs(control_Pos)<abs(errorDeadband_Pos)){
   stopMotors();
+    }
    }
   }
+}}
 }
-  }
 }
 
 
