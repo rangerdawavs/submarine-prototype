@@ -92,7 +92,7 @@ def get_center(contour):
     x,y,w,h = cv2.boundingRect(contour)
     xc =x+w/2-160
     yc =y+h/2-120
-    return xc,yc
+    return xc,yc,'C'
 
 def show_contour(contour,frame):
     x,y,w,h = cv2.boundingRect(contour)
@@ -100,9 +100,9 @@ def show_contour(contour,frame):
     cv2.imshow('colorTest', frame)
 
 def draw_vector(img,vector):
-    p1,p2 = vector
-    x1,y1 = p1
-    x2,y2 = p2
+    p1,p2,Type1 = vector
+    x1,y1,Type2 = p1
+    x2,y2,Type3 = p2
     x1= int(x1)
     x2= int(x2)
     y1= int(y1)
