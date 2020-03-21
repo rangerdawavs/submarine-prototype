@@ -13,7 +13,9 @@ sliderstart = (0, 0, 0, 255, 255, 255)   #staring values for sliders
 camera.setup_sliders(sliderstart)
 
 last_time = 0
-
+last_dev_time = 0
+current_dev_time = 0
+last_error = 0
 bluetooth = 0   #variable for current state
 
 while True:
@@ -35,14 +37,20 @@ while True:
         camera.show_contour(second_biggest_contour,frame)
         c1 = camera.get_center(biggest_contour)
         c2 = camera.get_center(second_biggest_contour)
-        obj_center = geo.mid_point(c1,c2)   #center of the obj
-        obj_vector = (obj_center,c1)  #defines a vector for the obj     
-        ceta = geo.angle_of_vector(obj_vector)   #finds the angle between the x axis and the vector
-        origin = (0,0)   #origin point
-        origin_vector= (obj_center,origin) #vector from the center of the object to the origin
-        ceta2 = geo.angle_of_vector(origin_vector)
-        mag = geo.magnitud_of_vector(origin_vector)   #magnitud of th vector aka distance to center
-        print(ceta,",",ceta2,",",mag)
+        obj_center = geo.mp(geo.vector(c1,c2))   #center of the obj
+        obj_vector = geo.vector(obj_center,c1)  #defines a vector for the obj
+        
+        ceta = geo.mix_vector(obj_vector)[1][1]   #finds the angle between the x axis and the vector
+        origin = geo.origin()   #origin point
+        origin_vector= geo.vector(obj_center,origin) #vector from the center of the object to the origin
+        ceta2 = geo.mix_vector(origin_vector)[1][1]
+        print(ceta,ceta2)
+        mag = geo.mix_vector(origin_vector)[1][0]   #magnitud of th vector aka distance to center
+        
+        dev = (((ceta-ceta2)-last_error)/(time.time()-last_dev_time))
+        last_error = ceta-ceta2
+        last_dev_time=time.time()
+        print(ceta,",",ceta2,",",mag,",",dev)
         camera.draw_vector(frame,obj_vector)
         camera.draw_vector(frame,origin_vector)
         if(bluetooth == 1):
@@ -52,6 +60,8 @@ while True:
                 port.write(str(int(ceta2)).encode('utf-8'))
                 port.write((",").encode('utf-8'))
                 port.write(str(int(mag)).encode('utf-8'))
+                port.write((",").encode('utf-8'))
+                port.write(str(int(dev)).encode('utf-8'))
                 #port.write((";").encode('utf-8'))
                 print("sending")
                 last_time=time.time()
