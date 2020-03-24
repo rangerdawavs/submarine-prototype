@@ -7,6 +7,7 @@ import geogebra_m as geo
 import serial   #for bluetooth
 import time
 import calculus1_m as calculus
+
 camera0 = camera.setup(320,240) #width,height
 
 sliderstart = (96, 195, 106, 255, 255, 209)   #staring values for sliders
@@ -23,9 +24,7 @@ stateVector= [0,0,0,0,0,0] # ordered as x, xdot,y,ydot,angle,angledot
 i=0 # this makes sure that the first loop, where the derivative is error, it won’t be printed
 
 while True:
-    slider_values = camera.read_sliders()
-    #gets values from sliders
-
+	slider_values = camera.read_sliders()#gets values from sliders
     frame = camera.snap(camera0)
     camera.show_img(frame)
     mask = camera.show_mask(frame,slider_values)
@@ -106,6 +105,6 @@ while True:
             bluetooth = 1
         else:
             bluetooth = 0
-        
+
 cv2.destroyAllWindows()
 camera0.release()
