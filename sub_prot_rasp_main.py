@@ -20,7 +20,7 @@ yPostion_list= calculus.track(2)
 Rotation_list=calculus.track(2)
 time_list= calculus.track(2)
 stateVector= [0,0,0,0,0,0] # ordered as x, xdot,y,ydot,angle,angledot
-
+roombaRadius= 0.10 # this is the radius of the roomba in SI units
 i=0 # this makes sure that the first loop, where the derivative is error, it won’t be printed
 
 while True:
@@ -49,11 +49,13 @@ while True:
         ceta2 = geo.mix_vector(origin_vector)[1][1]
         mag = geo.mix_vector(origin_vector)[1][0]   #magnitud of th vector aka distance to center
         
+	calcRadius = geo.mix_vector(obj_vector)[1][0]   # the calculated radius of the roomba
+	
         camera.draw_vector(frame,obj_vector)
         camera.draw_vector(frame,origin_vector)
 		#here we update the lists
-		xPostion_list= calculus.update(xPostion_list,obj_center[0]) 
-		yPostion_list=calculus.update(yPostion_list,obj_center[1])
+		xPostion_list= calculus.update(xPostion_list,obj_center[0]*(roombaRadius/calcRadius)) #includes unit conversion	
+		yPostion_list=calculus.update(yPostion_list,obj_center[1]*(roombaRadius/calcRadius)) #includes unit conversion
 		Rotation_list=calculus.update(Rotation_list,ceta)
 		time_list= calculus.update(time_list,time.time())
 		stateVector[0]=xPostion_list[-1] #the most recent item in the list
