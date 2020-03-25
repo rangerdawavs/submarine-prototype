@@ -152,8 +152,8 @@ void loop() {
                           0,         delta_t,
                           sq(delta_t)/2,    0,
                           0       , delta_t; 
-     Pos_ControlVector << ((mpu6050.getAccX())*sin(RotationVelocityVector(1)*PI/180)+(mpu6050.getAccY())*cos(RotationVelocityVector(1)*PI/180)),
-                          ((mpu6050.getAccX())*cos(RotationVelocityVector(1)*PI/180)+ (mpu6050.getAccY())*sin(-RotationVelocityVector(1)*PI/180));
+     Pos_ControlVector << ((mpu6050.getAccX())*9.8*sin(RotationVelocityVector(1)*PI/180)+(mpu6050.getAccY())*9.8*cos(RotationVelocityVector(1)*PI/180)),
+                          ((mpu6050.getAccX())*9.8*cos(RotationVelocityVector(1)*PI/180)+ (mpu6050.getAccY())*9.8*sin(-RotationVelocityVector(1)*PI/180));
      Rot_StateTransition << 1, 0,
                             0, 0;
      Rot_ControlMatrix << delta_t,
