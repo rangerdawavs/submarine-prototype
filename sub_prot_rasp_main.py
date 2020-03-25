@@ -23,6 +23,27 @@ stateVector= [0,0,0,0,0,0] # ordered as x, xdot,y,ydot,angle,angledot
 roombaRadius= 0.10 # this is the radius of the roomba in SI units
 i=0 # this makes sure that the first loop, where the derivative is error, it won’t be printed
 
+def printState(stateVector):
+        #this function prints the statevector in a nice format
+	#should be improved later
+        for i in range(4):
+                if stateVector[i]<0: # for the first 4 numbers, which have same format
+                        print("%2.4f" %(np.float16(stateVector[i])),end ="")
+                else:
+                        print(" ",end="")
+                        print("%2.4f" %(np.float16(stateVector[i])),end="")
+        if stateVector[4]<0:# only shows 1 digit
+                print("%2.1f" %(np.float16(stateVector[4])),end ="")
+        else:
+                print(" ",end="")
+                print("%2.1f" %(np.float16(stateVector[4])),end="")
+        if stateVector[5]<0:
+                print(“%2.2f" %(np.float16(stateVector[5])),end ="")
+        else:
+                print(" ",end="")
+                print(“%2.2f" %(np.float16(stateVector[5])),end="")                                
+        print(" ")
+
 while True:
 	slider_values = camera.read_sliders()#gets values from sliders
     frame = camera.snap(camera0)
@@ -65,7 +86,8 @@ while True:
 		stateVector[4]=Rotation_list[-1]
 		stateVector[5]=calculus.der(Rotation_list,time_list,-1)
 		if i==1:
-			print(int(stateVector[0]),",",int(stateVector[1]),",",int(stateVector[2]),",",int(stateVector[3]),",",int(stateVector[4]),",",int(stateVector[5]))
+			#print(int(stateVector[0]),",",int(stateVector[1]),",",int(stateVector[2]),",",int(stateVector[3]),",",int(stateVector[4]),",",int(stateVector[5]))
+			printState(stateVector)
 		i=1
         if(bluetooth == 1):
             if(time.time()-last_time>1):    #waits a second to send data
