@@ -24,28 +24,28 @@ roombaRadius= 0.10 # this is the radius of the roomba in SI units
 i=0 # this makes sure that the first loop, where the derivative is error, it won’t be printed
 
 def printState(stateVector):
-        #this function prints the statevector in a nice format
-	#should be improved later
-        for i in range(4):
-                if stateVector[i]<0: # for the first 4 numbers, which have same format
-                        print("%2.4f" %(np.float16(stateVector[i])),end ="")
-                else:
-                        print(" ",end="")
-                        print("%2.4f" %(np.float16(stateVector[i])),end="")
-        if stateVector[4]<0:# only shows 1 digit
-                print("%2.1f" %(np.float16(stateVector[4])),end ="")
+    #this function prints the statevector in a nice format
+    #should be improved later
+    for i in range(4):
+        if stateVector[i]<0: # for the first 4 numbers, which have same format
+            print("%2.4f" %(np.float16(stateVector[i])),end ="")
         else:
-                print(" ",end="")
-                print("%2.1f" %(np.float16(stateVector[4])),end="")
-        if stateVector[5]<0:
-                print(“%2.2f" %(np.float16(stateVector[5])),end ="")
-        else:
-                print(" ",end="")
-                print(“%2.2f" %(np.float16(stateVector[5])),end="")                                
-        print(" ")
+            print(" ",end="")
+            print("%2.4f" %(np.float16(stateVector[i])),end="")
+    if stateVector[4]<0:# only shows 1 digit
+        print("%2.1f" %(np.float16(stateVector[4])),end ="")
+    else:
+        print(" ",end="")
+        print("%2.1f" %(np.float16(stateVector[4])),end="")
+    if stateVector[5]<0:
+        print("%2.2f" %(np.float16(stateVector[5])),end ="")
+    else:
+        print(" ",end="")
+        print("%2.2f" %(np.float16(stateVector[5])),end="")                                
+    print(" ")
 
 while True:
-	slider_values = camera.read_sliders()#gets values from sliders
+    slider_values = camera.read_sliders()#gets values from sliders
     frame = camera.snap(camera0)
     camera.show_img(frame)
     mask = camera.show_mask(frame,slider_values)
@@ -69,26 +69,25 @@ while True:
         origin_vector= geo.vector(obj_center,origin) #vector from the center of the object to the origin
         ceta2 = geo.mix_vector(origin_vector)[1][1]
         mag = geo.mix_vector(origin_vector)[1][0]   #magnitud of th vector aka distance to center
-        
-	calcRadius = geo.mix_vector(obj_vector)[1][0]   # the calculated radius of the roomba
-	
+
+        calcRadius = geo.mix_vector(obj_vector)[1][0]   # the calculated radius of the roomba	
         camera.draw_vector(frame,obj_vector)
         camera.draw_vector(frame,origin_vector)
-		#here we update the lists
-		xPostion_list= calculus.update(xPostion_list,obj_center[0]*(roombaRadius/calcRadius)) #includes unit conversion	
-		yPostion_list=calculus.update(yPostion_list,obj_center[1]*(roombaRadius/calcRadius)) #includes unit conversion
-		Rotation_list=calculus.update(Rotation_list,ceta)
-		time_list= calculus.update(time_list,time.time())
-		stateVector[0]=xPostion_list[-1] #the most recent item in the list
-		stateVector[1]=calculus.der(xPostion_list,time_list,-1)
-		stateVector[2]=yPostion_list[-1]
-		stateVector[3]=calculus.der(yPostion_list,time_list,-1)
-		stateVector[4]=Rotation_list[-1]
-		stateVector[5]=calculus.der(Rotation_list,time_list,-1)
-		if i==1:
-			#print(int(stateVector[0]),",",int(stateVector[1]),",",int(stateVector[2]),",",int(stateVector[3]),",",int(stateVector[4]),",",int(stateVector[5]))
-			printState(stateVector)
-		i=1
+        #here we update the lists
+        xPostion_list= calculus.update(xPostion_list,obj_center[0]*(roombaRadius/calcRadius)) #includes unit conversion	
+        yPostion_list=calculus.update(yPostion_list,obj_center[1]*(roombaRadius/calcRadius)) #includes unit conversion
+        Rotation_list=calculus.update(Rotation_list,ceta)
+        time_list= calculus.update(time_list,time.time())
+        stateVector[0]=xPostion_list[-1] #the most recent item in the list
+        stateVector[1]=calculus.der(xPostion_list,time_list,-1)
+        stateVector[2]=yPostion_list[-1]
+        stateVector[3]=calculus.der(yPostion_list,time_list,-1)
+        stateVector[4]=Rotation_list[-1]
+        stateVector[5]=calculus.der(Rotation_list,time_list,-1)
+        if i==1:
+            #print(int(stateVector[0]),",",int(stateVector[1]),",",int(stateVector[2]),",",int(stateVector[3]),",",int(stateVector[4]),",",int(stateVector[5]))
+            printState(stateVector)
+        i=1
         if(bluetooth == 1):
             if(time.time()-last_time>1):    #waits a second to send data
                 if((stateVector[1]==0)and(stateVector[3]==0)and(stateVector[5]==0)): # if object is steady
@@ -99,22 +98,22 @@ while True:
                     port.write(str(int(stateVector[2])).encode('utf-8')) #position in y
                     port.write((",").encode('utf-8'))
                     port.write(str(int(stateVector[4])).encode('utf-8')) #rotation
-				else:
-					port.write(("0").encode('utf-8')) #ID of camera information
-					port.write((",").encode('utf-8'))
-					port.write(str(int(stateVector[0])).encode('utf-8')) # position in x
-					port.write((",").encode('utf-8'))
-					port.write(str(int(stateVector[1])).encode('utf-8')) #velocit in x
-					port.write((",").encode('utf-8'))
-					port.write(str(int(stateVector[2])).encode('utf-8')) #position in y
-					port.write((",").encode('utf-8'))
-					port.write(str(int(stateVector[3])).encode('utf-8'))#velocity in y
-					port.write((",").encode('utf-8')) # inting the velocities might be a bug source since they might be small decimals
-					port.write(str(int(stateVector[4])).encode('utf-8')) #angle
-					port.write((",").encode('utf-8'))
-					port.write(str(int(stateVector[5])).encode('utf-8')) #angle rate of change
-				print("sending")
-				last_time=time.time()
+                else:
+                    port.write(("0").encode('utf-8')) #ID of camera information
+                    port.write((",").encode('utf-8'))
+                    port.write(str(int(stateVector[0])).encode('utf-8')) # position in x
+                    port.write((",").encode('utf-8'))
+                    port.write(str(int(stateVector[1])).encode('utf-8')) #velocit in x
+                    port.write((",").encode('utf-8'))
+                    port.write(str(int(stateVector[2])).encode('utf-8')) #position in y
+                    port.write((",").encode('utf-8'))
+                    port.write(str(int(stateVector[3])).encode('utf-8'))#velocity in y
+                    port.write((",").encode('utf-8')) # inting the velocities might be a bug source since they might be small decimals
+                    port.write(str(int(stateVector[4])).encode('utf-8')) #angle
+                    port.write((",").encode('utf-8'))
+                    port.write(str(int(stateVector[5])).encode('utf-8')) #angle rate of change
+                print("sending")
+                last_time=time.time()
 					
     if(camera.wait_for_exit('a',5)==1):   #key to exit, milliseconds to wait
         if(bluetooth == 0):
