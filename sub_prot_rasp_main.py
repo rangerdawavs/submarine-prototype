@@ -119,12 +119,12 @@ while True:
         if(bluetooth == 0):
             port = serial.Serial("/dev/rfcomm"+input("port number"), baudrate=9600)
             port.write(("1").encode('utf-8'))
-            port.write(input("primer coeficiente").encode('utf-8'))
-            port.write(input("segundo coeficiente").encode('utf-8'))
-            port.write(input("tercer coeficiente").encode('utf-8'))
-            port.write(input("cuarto coeficiente").encode('utf-8'))
-            port.write(input("deadband position").encode('utf-8'))
-            port.write(input("deadband rotation").encode('utf-8'))
+            port.write(input("position proportional coefficient").encode('utf-8'))
+            port.write(input("position derivative coefficient").encode('utf-8'))
+            port.write(input("position integral coefficient").encode('utf-8'))
+            port.write(input("angle proportional coefficent").encode('utf-8'))
+            port.write(input("angle derivative coefficient").encode('utf-8'))
+            port.write(input("angle integral coefficient").encode('utf-8'))
             bluetooth = 1
         else:
             bluetooth = 0
