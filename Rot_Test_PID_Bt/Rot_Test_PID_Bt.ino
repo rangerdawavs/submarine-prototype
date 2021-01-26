@@ -28,8 +28,12 @@ int Msg =0;// this variable is used to make the vehicle wait for an input. Curre
 BLA::Matrix<4,4> Pos_StateTransition;
 BLA::Matrix<4,2> Pos_ControlMatrix;
 BLA::Matrix<2>   Pos_ControlVector;// the accelerometer output
-BLA::Matrix<2,2> Pos_PredictionVariance;// should be a identity matrix multiplied by the accelerometer variance
-BLA::Matrix<4,4> Pos_MeasurmentVariance;//should be the camera variance diagonally and 0s in the remaining spaces
+BLA::Matrix<2,2> Pos_PredictionVariance={1,0, 
+                                         0,1};// should be a identity matrix multiplied by the accelerometer variance
+BLA::Matrix<4,4> Pos_MeasurmentVariance= {0.02,0,0,0,
+                                           0,0.02,0,0,
+                                           0,0,0.02,0,
+                                           0,0,0,0.02};//should be the camera variance diagonally and 0s in the remaining spaces
 BLA::Matrix<4>   Pos_MeasurementVector;
 BLA::Matrix<4,4> Pos_StateCovarianceMatrix;
 BLA::Matrix<4,4> Pos_H;
@@ -43,8 +47,10 @@ BLA::Matrix<4,4> Pos_identity = {1,0,0,0,
 BLA::Matrix<2,2> Rot_StateTransition;
 BLA::Matrix<2>   Rot_ControlMatrix;
 BLA::Matrix<1>   Rot_ControlVector;// the gyro output
-BLA::Matrix<2,2> Rot_PredictionVariance;// should be a identity matrix multiplied by the gyro variance
-BLA::Matrix<2,2> Rot_MeasurmentVariance;//should be the camera variance diagonally and 0s in the remaining spaces
+BLA::Matrix<2,2> Rot_PredictionVariance={0.03,0, 
+                                         0,3};// should be a identity matrix multiplied by the gyro variance
+BLA::Matrix<2,2> Rot_MeasurmentVariance={0.2,0, 
+                                         0,0.2};//should be the camera variance diagonally and 0s in the remaining spaces
 BLA::Matrix<2>   Rot_MeasurementVector;
 BLA::Matrix<2,2> Rot_StateCovarianceMatrix;
 BLA::Matrix<2,2> Rot_H;
@@ -96,12 +102,12 @@ void loop() {
    g= getValue(a,',',5);
    h= getValue(a,',',6);
    if(b=="0"){// this is position and rotation information calculated by the camera 
-    Pos_MeasurementVector(0)= c.toFloat();// x position
-    Pos_MeasurementVector(1)= d.toFloat();// x dot aka x velocity
-    Pos_MeasurementVector(2)= e.toFloat();// y position
-    Pos_MeasurementVector(3)= f.toFloat();// y dot aka y velocity
-    Rot_MeasurementVector(0)= g.toFloat();// zeta
-    Rot_MeasurementVector(1)= h.toFloat();//rotational velocity
+    Pos_MeasurementVector(0)= c.toFloat()/1000;// x position
+    Pos_MeasurementVector(1)= d.toFloat()/1000;// x dot aka x velocity
+    Pos_MeasurementVector(2)= e.toFloat()/1000;// y position
+    Pos_MeasurementVector(3)= f.toFloat()/1000;// y dot aka y velocity
+    Rot_MeasurementVector(0)= g.toFloat()/1000;// zeta
+    Rot_MeasurementVector(1)= h.toFloat()/1000;//rotational velocity
     //The following section calculates the Kalman Gain, the Vector and the covariance matrix for position and rotation
     Pos_KalmanGain+=((Pos_StateCovarianceMatrix)*(Pos_StateCovarianceMatrix+Pos_MeasurmentVariance).Inverse())-Pos_KalmanGain ;
     PositionVelocityVector+=Pos_KalmanGain*(Pos_MeasurementVector-PositionVelocityVector);
@@ -146,18 +152,18 @@ void loop() {
     Coefficients(5)=h.toFloat();// coefficient for rotation integral
    } 
    if(b=="2"){// in the case that it is setup information initial position in x, y and angle
-    PositionVelocityVector(0) = c.toInt();// x position
-    PositionVelocityVector(2) = d.toInt();// y position
-    RotationVelocityVector(0) = e.toInt();// angle position
+    PositionVelocityVector(0) = c.toInt()/1000;// x position
+    PositionVelocityVector(2) = d.toInt()/1000;// y position
+    RotationVelocityVector(0) = e.toInt()/1000;// angle position
     Msg=1;
    }
    if(b=="3"){// when waypoint information is sent
-    Desired_State(0)= c.toFloat(); //x position
-    Desired_State(1)= d.toFloat();// x dot position
-    Desired_State(2)= e.toFloat();// y  position
-    Desired_State(3)= f.toFloat(); //y dot position
-    Desired_State(4)= g.toFloat(); // Rot
-    Desired_State(5)= h.toFloat();// rot dot
+    Desired_State(0)= c.toFloat()/1000; //x position
+    Desired_State(1)= d.toFloat()/1000;// x dot position
+    Desired_State(2)= e.toFloat()/1000;// y  position
+    Desired_State(3)= f.toFloat()/1000; //y dot position
+    Desired_State(4)= g.toFloat()/1000; // Rot
+    Desired_State(5)= h.toFloat()/1000;// rot dot
    }
    }
   if( Msg>=1){ //this condition is always met. It is just there in case another condition needs to be added later
@@ -288,10 +294,10 @@ void loop() {
      Serial.print(" ");
      Serial.print(control_Rot);
      Serial.println(" ");
-     /*
+     
      Serial << "" <<PositionVelocityVector ;     
      Serial << "" <<RotationVelocityVector << '\n';
-     */
+     
      if((abs(error_Rot)<20 and abs(error_Rot)>5)){
      digitalWrite(blueLED,HIGH);
      }

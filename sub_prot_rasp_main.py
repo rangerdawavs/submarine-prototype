@@ -9,11 +9,12 @@ import time
 import calculus1_m as calculus
 
 camera0 = camera.setup(320,240) #width,height
-
-sliderstart = (96, 195, 106, 255, 255, 209)   #staring values for sliders
+sliderstart = (90, 85, 50, 130, 255, 255)   #staring values for sliders
 camera.setup_sliders(sliderstart)
 
-last_time = 0
+
+prom_list=[]
+n=0
 bluetooth = 0   #variable for current state
 xPostion_list= calculus.track(2)
 yPostion_list= calculus.track(2)
@@ -21,30 +22,40 @@ Rotation_list=calculus.track(2)
 time_list= calculus.track(2)
 stateVector= [0,0,0,0,0,0] # ordered as x, xdot,y,ydot,angle,angledot
 roombaRadius= 0.10 # this is the radius of the roomba in SI units
-i=0 # this makes sure that the first loop, where the derivative is error, it won’t be printed
+loopN=-1 #Loop number, This is used to make sure only in certain loops the bluetooth is sent+ removes derivative bug
 
 def printState(stateVector):
     #this function prints the statevector in a nice format
-    #should be improved later
+    #slightly laggy
+    pString=""
     for i in range(4):
         if stateVector[i]<0: # for the first 4 numbers, which have same format
-            print("%2.4f" %(np.float16(stateVector[i])),end ="")
+            pString= pString+str("%2.4f"%(stateVector[i]) )
         else:
-            print(" ",end="")
-            print("%2.4f" %(np.float16(stateVector[i])),end="")
+            pString=pString+str(" " )+ str("%2.4f" %(stateVector[i]) )
     if stateVector[4]<0:# only shows 1 digit
-        print("%2.1f" %(np.float16(stateVector[4])),end ="")
+        pString=pString+str("%2.1f" %(stateVector[4]))
     else:
-        print(" ",end="")
-        print("%2.1f" %(np.float16(stateVector[4])),end="")
+        pString=pString+str(" " )+str("%2.1f" %(stateVector[4]) )
     if stateVector[5]<0:
-        print("%2.2f" %(np.float16(stateVector[5])),end ="")
+        pString=pString+str("%2.2f" %(stateVector[5]))
     else:
-        print(" ",end="")
-        print("%2.2f" %(np.float16(stateVector[5])),end="")                                
-    print(" ")
+        pString=pString+str(" " )+str("%2.2f" %(stateVector[5]) )                            
+    print(pString)
+
+def compressToSend(nDataType,pVector,pItemList):
+    #This function turns the information from a given Vector into a string to
+    #Send it over bluetooth. It includes data type number and multiplies the remaining
+    #Values by a 1000 to include decimals. It also adds the end line character(z)
+    #nDataType is an int, pVector a vector,pItem list should be a array of numbers
+    pString= str(nDataType)+","
+    for i in pItemList:
+        pString= pString+str(int(pVector[i]*1000))+","
+    pString= pString+"z"
+    return pString
 
 while True:
+   
     slider_values = camera.read_sliders()#gets values from sliders
     frame = camera.snap(camera0)
     camera.show_img(frame)
@@ -52,7 +63,7 @@ while True:
     contours = camera.find_contours(mask)
     
     if(len(contours)>1):    #ckecks to make sure there are atleast two contours
-        
+        loopN+=1# during first loop it will equal 0
         biggest_contour = max(contours, key=cv2.contourArea)
         remove_a(contours,biggest_contour)  #removes the biggest contour from contours
         second_biggest_contour = max(contours, key=cv2.contourArea)
@@ -84,47 +95,52 @@ while True:
         stateVector[3]=calculus.der(yPostion_list,time_list,-1)
         stateVector[4]=Rotation_list[-1]
         stateVector[5]=calculus.der(Rotation_list,time_list,-1)
-        if i==1:
-            #print(int(stateVector[0]),",",int(stateVector[1]),",",int(stateVector[2]),",",int(stateVector[3]),",",int(stateVector[4]),",",int(stateVector[5]))
-            printState(stateVector)
-        i=1
-        if(bluetooth == 1):
-            if(time.time()-last_time>1):    #waits a second to send data
+
+        if(bluetooth == 1): # This is where bluetooth is sent
+            if((loopN%5!=0)):  
                 if((stateVector[1]==0)and(stateVector[3]==0)and(stateVector[5]==0)): # if object is steady
-                    port.write(("2").encode('utf-8'))# ID of calibration information
-                    port.write((",").encode('utf-8'))
-                    port.write(str(int(stateVector[0])).encode('utf-8')) # position in x
-                    port.write((",").encode('utf-8'))
-                    port.write(str(int(stateVector[2])).encode('utf-8')) #position in y
-                    port.write((",").encode('utf-8'))
-                    port.write(str(int(stateVector[4])).encode('utf-8')) #rotation
+                    port.write((compressToSend(2,stateVector,range(0,6,2))).encode('utf-8'))
                 else:
-                    port.write(("0").encode('utf-8')) #ID of camera information
-                    port.write((",").encode('utf-8'))
-                    port.write(str(int(stateVector[0])).encode('utf-8')) # position in x
-                    port.write((",").encode('utf-8'))
-                    port.write(str(int(stateVector[1])).encode('utf-8')) #velocit in x
-                    port.write((",").encode('utf-8'))
-                    port.write(str(int(stateVector[2])).encode('utf-8')) #position in y
-                    port.write((",").encode('utf-8'))
-                    port.write(str(int(stateVector[3])).encode('utf-8'))#velocity in y
-                    port.write((",").encode('utf-8')) # inting the velocities might be a bug source since they might be small decimals
-                    port.write(str(int(stateVector[4])).encode('utf-8')) #angle
-                    port.write((",").encode('utf-8'))
-                    port.write(str(int(stateVector[5])).encode('utf-8')) #angle rate of change
-                print("sending")
-                last_time=time.time()
-					
+                    port.write((compressToSend(0,stateVector,range(6))).encode('utf-8'))
+            else:
+                 if (loopN!= 0):# ensures no prints during first loop when derivative is 0
+                     #printState(stateVector)
+                     pass
+
+               # This is where the average duration of a loop is calculated
+            if(n<100):
+                prom_list.append(calculus.der(time_list,[0,1],-1))# adds the time since the last loop to a list to be averaged
+                n+=1
+            else:
+                temp_int=0
+                for slc in prom_list:
+                    temp_int+=slc
+                temp_int/=100
+                print(temp_int)
+                prom_list=[]
+                n=0
+            
+                    
     if(camera.wait_for_exit('a',5)==1):   #key to exit, milliseconds to wait
         if(bluetooth == 0):
             port = serial.Serial("/dev/rfcomm"+input("port number"), baudrate=9600)
+            '''
             port.write(("1").encode('utf-8'))
-            port.write(input("position proportional coefficient").encode('utf-8'))
-            port.write(input("position derivative coefficient").encode('utf-8'))
-            port.write(input("position integral coefficient").encode('utf-8'))
-            port.write(input("angle proportional coefficent").encode('utf-8'))
-            port.write(input("angle derivative coefficient").encode('utf-8'))
-            port.write(input("angle integral coefficient").encode('utf-8'))
+            port.write(input("primer coeficiente").encode('utf-8'))
+            port.write(input("segundo coeficiente").encode('utf-8'))
+            port.write(input("tercer coeficiente").encode('utf-8'))
+            port.write(input("cuarto coeficiente").encode('utf-8'))
+            port.write(input("deadband position").encode('utf-8'))
+            port.write(input("deadband rotation").encode('utf-8'))
+            '''
+            setupString= "1,"
+            setupString=setupString+input("position proportional")+ ","
+            setupString=setupString+input("position derivative")+ ","
+            setupString=setupString+input("position integral")+ ","
+            setupString=setupString+input("rotation proportionals")+ ","
+            setupString=setupString+input("rotation derivative")+ ","
+            setupString=setupString+input("rotation integral")+ ","
+            port.write((setupString).encode('utf-8'))
             bluetooth = 1
         else:
             bluetooth = 0
